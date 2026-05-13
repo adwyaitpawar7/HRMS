@@ -1,0 +1,3296 @@
+PROJECT NAME:
+Hotel + Restaurant Management System
+
+PROJECT TYPE:
+Enterprise-level Microservices-based Restaurant and Hotel Management Platform.
+
+PRIMARY PURPOSE:
+The system is designed to manage restaurant operations, kitchen workflow, inventory management, billing, reporting, authentication, and analytics using scalable microservices architecture.
+
+TECH STACK:
+Frontend:
+- ReactJS
+
+Backend:
+- Java Spring Boot Microservices
+- Spring Cloud
+- Spring Data JPA
+- Hibernate
+- Spring Security
+- JWT Authentication
+
+Database:
+- Oracle Database
+
+Infrastructure:
+- Eureka Service Registry
+- Spring Cloud Gateway
+- Kafka or RabbitMQ for event-driven communication
+
+Build Tool:
+- Maven Multi-Module Project
+
+OPTIONAL:
+- Docker
+- Kubernetes
+
+====================================================
+CORE BUSINESS REQUIREMENTS
+====================================================
+
+1. RESTAURANT FLOW
+- Waiter can create dine-in orders.
+- Online customer orders are also supported.
+- Orders should appear:
+  - in Kitchen Dashboard
+  - in Counter/Billing Dashboard
+
+2. KITCHEN WORKFLOW
+- Kitchen receives order in real-time.
+- Cook can mark:
+  - NEW
+  - PREPARING
+  - READY
+- Waiter receives notification when order is READY.
+- Counter also receives updates for billing.
+
+3. ORDER TIME TRACKING
+System tracks:
+- placed_time
+- ready_time
+- served_time
+
+4. INVENTORY MANAGEMENT
+Kitchen inventory management system required:
+- Daily stock entry
+- Stock usage tracking
+- Remaining stock calculation
+- Kitchen expense tracking
+
+5. MAKER-CHECKER IMPLEMENTATION
+Maker-checker pattern is ONLY required for:
+- stock entries
+- kitchen expenses
+
+Meaning:
+- Maker enters data
+- Checker approves/rejects
+
+Fields used:
+- mk_user_id
+- mk_time
+- ck_user_id
+- ck_time
+- approval_status
+
+Maker-checker should NOT be used in:
+- order service
+- billing service
+- kitchen service
+
+6. REPORTS
+Generate:
+- daily reports
+- monthly reports
+- yearly reports
+
+Reports include:
+- revenue
+- expenses
+- profit
+- most sold items
+- order analytics
+
+====================================================
+MICROSERVICES ARCHITECTURE
+====================================================
+
+Services:
+1. API Gateway
+2. Eureka Service Registry
+3. User Service
+4. Order Service
+5. Kitchen Service
+6. Inventory Service
+7. Billing Service
+8. Report Service
+9. common-module
+
+====================================================
+ARCHITECTURE PRINCIPLES
+====================================================
+
+1. MICROSERVICES
+Each service:
+- owns its own database schema
+- has independent business logic
+- communicates via REST/events
+
+2. EVENT-DRIVEN COMMUNICATION
+System uses:
+- Kafka or RabbitMQ
+
+Events include:
+- ORDER_CREATED
+- ORDER_PREPARING
+- ORDER_READY
+- PAYMENT_COMPLETED
+- STOCK_UPDATED
+- EXPENSE_APPROVED
+
+3. SAGA PATTERN
+Use choreography-based saga pattern.
+
+Reason:
+- maintain distributed consistency
+- avoid distributed transactions
+
+Compensation example:
+If inventory deduction fails:
+- cancel order
+- remove kitchen order
+- cancel draft bill
+
+4. SOFT DELETE
+Important entities should use:
+- is_deleted
+or
+- status-based soft delete
+
+Avoid physical deletion.
+
+5. AUDIT LOGGING
+All major tables should include:
+- created_by
+- created_at
+- updated_by
+- updated_at
+
+6. COMMON MODULE
+common-module stores:
+- DTOs
+- shared events
+- constants
+- utility classes
+- exception models
+
+====================================================
+PROJECT STRUCTURE
+====================================================
+
+restaurant-system
+│
+├── common-module
+│
+├── service-registry
+├── api-gateway
+│
+├── user-service
+├── order-service
+├── kitchen-service
+├── inventory-service
+├── billing-service
+├── report-service
+
+====================================================
+API GATEWAY RESPONSIBILITIES
+====================================================
+
+Gateway routes requests:
+
+/api/users → user-service
+/api/orders → order-service
+/api/kitchen → kitchen-service
+/api/inventory → inventory-service
+/api/billing → billing-service
+/api/reports → report-service
+
+====================================================
+EUREKA RESPONSIBILITIES
+====================================================
+
+- service registration
+- service discovery
+- dynamic microservice resolution
+
+====================================================
+ORDER LIFECYCLE OVERVIEW
+====================================================
+
+1. Waiter places order.
+2. Order Service stores order.
+3. ORDER_CREATED event published.
+4. Kitchen Service receives event.
+5. Kitchen displays order in KDS.
+6. Inventory deducts ingredients.
+7. Cook prepares food.
+8. Cook marks READY.
+9. ORDER_READY event published.
+10. Waiter serves order.
+11. Billing generates bill.
+12. Payment completed.
+13. PAYMENT_COMPLETED event published.
+14. Report Service updates analytics.
+
+====================================================
+KITCHEN DISPLAY SYSTEM (KDS)
+====================================================
+
+Kitchen UI shows:
+- NEW orders
+- PREPARING orders
+- READY orders
+
+Kitchen dashboard acts as real-time order queue.
+
+====================================================
+TABLE SESSION CONCEPT
+====================================================
+
+Instead of multiple random orders per table:
+- create one table session
+- all order items belong to session
+- session closes after billing
+
+Purpose:
+- avoid duplicate table orders
+- simplify billing
+- support incremental ordering
+
+====================================================
+ORDER STATUS VALUES
+====================================================
+
+PLACED
+PREPARING
+READY
+SERVED
+PAID
+CANCELLED
+
+====================================================
+KITCHEN STATUS VALUES
+====================================================
+
+NEW
+PREPARING
+READY
+DELIVERED
+
+====================================================
+INVENTORY APPROVAL STATUS
+====================================================
+
+PENDING
+APPROVED
+REJECTED
+
+====================================================
+PAYMENT METHODS
+====================================================
+
+CASH
+CARD
+UPI
+ONLINE
+
+====================================================
+USER ROLES
+====================================================
+
+ADMIN
+WAITER
+COOK
+COUNTER
+INVENTORY
+
+====================================================
+DEVELOPMENT ORDER
+====================================================
+
+1. Eureka Service Registry
+2. API Gateway
+3. common-module
+4. User Service
+5. Order Service
+6. Kitchen Service
+7. Inventory Service
+8. Billing Service
+9. Report Service
+10. Kafka/RabbitMQ Integration
+
+====================================================
+CODING STANDARDS
+====================================================
+
+Use layered architecture:
+
+- controller
+- service
+- repository
+- entity
+- dto
+- config
+- exception
+
+Use snake_case naming in database.
+
+Use separate schema/database per service.
+
+====================================================
+END OF PART 1
+====================================================
+====================================================
+DATABASE DESIGN OVERVIEW
+====================================================
+
+DATABASE:
+Oracle Database
+
+DATABASE ARCHITECTURE:
+Each microservice owns its own schema/database.
+
+Services:
+- User Service DB
+- Order Service DB
+- Kitchen Service DB
+- Inventory Service DB
+- Billing Service DB
+- Report Service DB
+
+TOTAL TABLES:
+25+
+
+NAMING CONVENTION:
+- snake_case
+- singular/plural consistency
+- primary keys use *_id
+
+====================================================
+1. USER SERVICE DATABASE
+====================================================
+
+PURPOSE:
+Authentication, authorization, staff management, session tracking, activity auditing.
+
+----------------------------------------------------
+TABLE: roles
+----------------------------------------------------
+
+Columns:
+- role_id (PK)
+- role_name
+- description
+- created_at
+- updated_at
+
+Example Roles:
+- ADMIN
+- WAITER
+- COOK
+- COUNTER
+- INVENTORY
+
+----------------------------------------------------
+TABLE: staff_users
+----------------------------------------------------
+
+Columns:
+- user_id (PK)
+- role_id (FK -> roles.role_id)
+- username
+- password_hash
+- full_name
+- phone_number
+- email
+- status
+- created_at
+- updated_at
+
+Status Values:
+- ACTIVE
+- INACTIVE
+- SUSPENDED
+
+Purpose:
+Stores all restaurant/hotel staff accounts.
+
+----------------------------------------------------
+TABLE: user_sessions
+----------------------------------------------------
+
+Columns:
+- session_id (PK)
+- user_id (FK -> staff_users.user_id)
+- login_time
+- logout_time
+- ip_address
+- device_info
+
+Purpose:
+Tracks login sessions.
+
+----------------------------------------------------
+TABLE: user_activity_logs
+----------------------------------------------------
+
+Columns:
+- log_id (PK)
+- user_id (FK -> staff_users.user_id)
+- action
+- entity_type
+- entity_id
+- action_time
+- remarks
+
+Purpose:
+Tracks all user actions.
+
+Example:
+- CREATED_ORDER
+- GENERATED_BILL
+- MARKED_ORDER_READY
+
+====================================================
+2. ORDER SERVICE DATABASE
+====================================================
+
+PURPOSE:
+Manages restaurant tables, sessions, orders, order items, and order lifecycle.
+
+----------------------------------------------------
+TABLE: restaurant_tables
+----------------------------------------------------
+
+Columns:
+- table_id (PK)
+- table_number
+- capacity
+- status
+- created_at
+- updated_at
+
+Status:
+- AVAILABLE
+- OCCUPIED
+- RESERVED
+- INACTIVE
+
+Purpose:
+Stores restaurant seating tables.
+
+----------------------------------------------------
+TABLE: table_sessions
+----------------------------------------------------
+
+Columns:
+- session_id (PK)
+- table_id (FK -> restaurant_tables.table_id)
+- waiter_id
+- start_time
+- end_time
+- status
+- created_at
+- updated_at
+
+Status:
+- OPEN
+- CLOSED
+
+Purpose:
+Tracks customer occupancy sessions per table.
+
+IMPORTANT DESIGN DECISION:
+Use table_sessions to avoid multiple disconnected orders per table.
+
+----------------------------------------------------
+TABLE: orders
+----------------------------------------------------
+
+Columns:
+- order_id (PK)
+- order_number
+- session_id (FK -> table_sessions.session_id)
+- order_type
+- status
+- placed_time
+- ready_time
+- served_time
+- total_amount
+- order_notes
+- created_by
+- created_at
+- updated_by
+- updated_at
+
+Order Types:
+- DINE_IN
+- ONLINE
+
+Order Status:
+- PLACED
+- PREPARING
+- READY
+- SERVED
+- PAID
+- CANCELLED
+
+Purpose:
+Stores main order lifecycle data.
+
+----------------------------------------------------
+TABLE: order_items
+----------------------------------------------------
+
+Columns:
+- order_item_id (PK)
+- order_id (FK -> orders.order_id)
+- menu_item_id
+- item_name
+- quantity
+- price
+- subtotal
+- created_at
+
+Purpose:
+Stores items within an order.
+
+IMPORTANT:
+Store item_name and price snapshot even if menu changes later.
+
+----------------------------------------------------
+TABLE: order_status_history
+----------------------------------------------------
+
+Columns:
+- history_id (PK)
+- order_id (FK -> orders.order_id)
+- status
+- updated_by
+- updated_time
+- remarks
+
+Purpose:
+Tracks order lifecycle changes.
+
+====================================================
+3. KITCHEN SERVICE DATABASE
+====================================================
+
+PURPOSE:
+Handles Kitchen Display System (KDS), cooking workflow, and kitchen queue.
+
+----------------------------------------------------
+TABLE: kitchen_orders
+----------------------------------------------------
+
+Columns:
+- kitchen_order_id (PK)
+- order_id
+- session_id
+- table_number
+- status
+- received_time
+- start_time
+- ready_time
+- cook_id
+- priority
+- created_at
+- updated_at
+
+Kitchen Status:
+- NEW
+- PREPARING
+- READY
+- DELIVERED
+
+Purpose:
+Stores kitchen queue orders.
+
+----------------------------------------------------
+TABLE: kitchen_order_items
+----------------------------------------------------
+
+Columns:
+- kitchen_item_id (PK)
+- kitchen_order_id (FK -> kitchen_orders.kitchen_order_id)
+- order_item_id
+- item_name
+- quantity
+- status
+- created_at
+
+Item Status:
+- PENDING
+- PREPARING
+- READY
+
+Purpose:
+Stores kitchen-level order items.
+
+----------------------------------------------------
+TABLE: kitchen_order_history
+----------------------------------------------------
+
+Columns:
+- history_id (PK)
+- kitchen_order_id (FK -> kitchen_orders.kitchen_order_id)
+- status
+- updated_by
+- updated_time
+- remarks
+
+Purpose:
+Tracks cooking workflow changes.
+
+====================================================
+4. INVENTORY SERVICE DATABASE
+====================================================
+
+PURPOSE:
+Tracks ingredients, stock, usage, kitchen expenses, and maker-checker approvals.
+
+IMPORTANT:
+Maker-checker pattern ONLY applies here.
+
+----------------------------------------------------
+TABLE: ingredients
+----------------------------------------------------
+
+Columns:
+- ingredient_id (PK)
+- ingredient_name
+- unit
+- status
+- created_at
+- updated_at
+
+Units:
+- kg
+- liter
+- piece
+
+Purpose:
+Ingredient master table.
+
+----------------------------------------------------
+TABLE: stock_entries
+----------------------------------------------------
+
+Columns:
+- stock_entry_id (PK)
+- ingredient_id (FK -> ingredients.ingredient_id)
+- quantity
+- price
+- stock_date
+
+Maker-Checker Fields:
+- mk_user_id
+- mk_time
+- ck_user_id
+- ck_time
+- approval_status
+
+Audit Fields:
+- created_at
+- updated_at
+
+Approval Status:
+- PENDING
+- APPROVED
+- REJECTED
+
+Purpose:
+Daily stock purchase entries.
+
+----------------------------------------------------
+TABLE: stock_usage
+----------------------------------------------------
+
+Columns:
+- usage_id (PK)
+- ingredient_id (FK -> ingredients.ingredient_id)
+- quantity_used
+- usage_date
+- recorded_by
+- recorded_time
+- remarks
+
+Purpose:
+Tracks ingredient consumption.
+
+----------------------------------------------------
+TABLE: kitchen_expenses
+----------------------------------------------------
+
+Columns:
+- expense_id (PK)
+- expense_type
+- amount
+- expense_date
+- description
+
+Maker-Checker Fields:
+- mk_user_id
+- mk_time
+- ck_user_id
+- ck_time
+- approval_status
+
+Audit Fields:
+- created_at
+- updated_at
+
+Purpose:
+Tracks kitchen operational expenses.
+
+----------------------------------------------------
+TABLE: stock_transaction_history
+----------------------------------------------------
+
+Columns:
+- transaction_id (PK)
+- ingredient_id (FK -> ingredients.ingredient_id)
+- transaction_type
+- quantity
+- reference_id
+- transaction_time
+- remarks
+
+Transaction Types:
+- STOCK_IN
+- USAGE
+- ADJUSTMENT
+
+Purpose:
+Tracks all inventory movements.
+
+====================================================
+5. BILLING SERVICE DATABASE
+====================================================
+
+PURPOSE:
+Handles bills, bill items, payments, and invoices.
+
+----------------------------------------------------
+TABLE: bills
+----------------------------------------------------
+
+Columns:
+- bill_id (PK)
+- order_id
+- bill_number
+- subtotal
+- tax_amount
+- discount
+- total_amount
+- bill_status
+- created_at
+- updated_at
+
+Bill Status:
+- DRAFT
+- GENERATED
+- PAID
+- CANCELLED
+
+Purpose:
+Main billing table.
+
+----------------------------------------------------
+TABLE: bill_items
+----------------------------------------------------
+
+Columns:
+- bill_item_id (PK)
+- bill_id (FK -> bills.bill_id)
+- item_name
+- quantity
+- price
+- subtotal
+- created_at
+
+Purpose:
+Stores billed item snapshots.
+
+----------------------------------------------------
+TABLE: payments
+----------------------------------------------------
+
+Columns:
+- payment_id (PK)
+- bill_id (FK -> bills.bill_id)
+- payment_method
+- amount_paid
+- payment_time
+- payment_status
+- transaction_ref
+
+Payment Methods:
+- CASH
+- CARD
+- UPI
+- ONLINE
+
+Payment Status:
+- SUCCESS
+- FAILED
+- REFUNDED
+
+Purpose:
+Tracks payment transactions.
+
+----------------------------------------------------
+TABLE: invoices
+----------------------------------------------------
+
+Columns:
+- invoice_id (PK)
+- bill_id (FK -> bills.bill_id)
+- invoice_number
+- generated_time
+- generated_by
+
+Purpose:
+Stores invoice generation metadata.
+
+====================================================
+6. REPORT SERVICE DATABASE
+====================================================
+
+PURPOSE:
+Stores analytics and aggregated reporting data.
+
+IMPORTANT:
+This service stores summarized data, not transactional data.
+
+----------------------------------------------------
+TABLE: daily_sales_reports
+----------------------------------------------------
+
+Columns:
+- report_id (PK)
+- report_date
+- total_orders
+- total_revenue
+- total_tax
+- total_expense
+- net_profit
+- generated_at
+
+Purpose:
+Daily analytics.
+
+----------------------------------------------------
+TABLE: monthly_sales_reports
+----------------------------------------------------
+
+Columns:
+- report_id (PK)
+- report_month
+- report_year
+- total_orders
+- total_revenue
+- total_expense
+- net_profit
+- generated_at
+
+Purpose:
+Monthly analytics.
+
+----------------------------------------------------
+TABLE: yearly_sales_reports
+----------------------------------------------------
+
+Columns:
+- report_id (PK)
+- report_year
+- total_orders
+- total_revenue
+- total_expense
+- net_profit
+- generated_at
+
+Purpose:
+Yearly analytics.
+
+----------------------------------------------------
+TABLE: item_sales_reports
+----------------------------------------------------
+
+Columns:
+- item_report_id (PK)
+- menu_item_id
+- item_name
+- total_quantity
+- total_revenue
+- report_date
+- generated_at
+
+Purpose:
+Tracks item popularity and sales analytics.
+
+====================================================
+RELATIONSHIP OVERVIEW
+====================================================
+
+User Service
+    |
+    v
+Order Service
+    |
+    v
+Kitchen Service
+    |
+    v
+Inventory Service
+
+Order Service
+    |
+    v
+Billing Service
+    |
+    v
+Report Service
+
+====================================================
+IMPORTANT DESIGN DECISIONS
+====================================================
+
+1. Table sessions prevent duplicate table orders.
+
+2. Kitchen Service stores only cooking-related data,
+not full order data.
+
+3. Billing stores snapshots of order items.
+
+4. Inventory uses maker-checker.
+
+5. Reports store aggregated data only.
+
+6. Each service owns its own schema.
+
+7. Avoid distributed joins across services.
+
+====================================================
+END OF PART 2
+====================================================
+====================================================
+EVENT-DRIVEN ARCHITECTURE OVERVIEW
+====================================================
+
+SYSTEM ARCHITECTURE STYLE:
+Event-Driven Microservices Architecture
+
+MESSAGE BROKER:
+- Kafka OR RabbitMQ
+(Both supported conceptually)
+
+PURPOSE:
+- decouple services
+- improve scalability
+- improve fault tolerance
+- avoid tight coupling
+- support asynchronous communication
+
+IMPORTANT:
+Services should communicate primarily through events.
+
+REST APIs should mainly be used for:
+- synchronous frontend requests
+- service-specific queries
+- authentication
+
+====================================================
+MAIN ARCHITECTURE COMPONENTS
+====================================================
+
+Frontend:
+- ReactJS
+
+Infrastructure:
+- API Gateway
+- Eureka Service Registry
+- Kafka or RabbitMQ
+
+Backend Services:
+- User Service
+- Order Service
+- Kitchen Service
+- Inventory Service
+- Billing Service
+- Report Service
+
+Shared Module:
+- common-module
+
+====================================================
+EVENT COMMUNICATION PRINCIPLE
+====================================================
+
+Instead of:
+Order Service directly calling every service,
+
+Use:
+Order Service publishes events,
+Other services subscribe to them.
+
+Example:
+
+BAD:
+Order Service → Kitchen Service
+Order Service → Inventory Service
+Order Service → Billing Service
+
+GOOD:
+Order Service publishes ORDER_CREATED event.
+Other services react independently.
+
+====================================================
+MAIN DOMAIN EVENTS
+====================================================
+
+1. ORDER_CREATED
+2. ORDER_PREPARING
+3. ORDER_READY
+4. ORDER_SERVED
+5. PAYMENT_COMPLETED
+6. STOCK_UPDATED
+7. EXPENSE_APPROVED
+8. ORDER_CANCELLED
+
+====================================================
+ORDER LIFECYCLE - COMPLETE FLOW
+====================================================
+
+----------------------------------------------------
+STEP 1 — WAITER CREATES ORDER
+----------------------------------------------------
+
+Flow:
+Frontend → API Gateway → Order Service
+
+Order Service Actions:
+- validate request
+- create order
+- create order_items
+- create order_status_history
+- set status = PLACED
+- set placed_time
+
+Then publish:
+
+EVENT:
+ORDER_CREATED
+
+====================================================
+STEP 2 — KITCHEN RECEIVES ORDER
+====================================================
+
+Kitchen Service subscribes to:
+ORDER_CREATED
+
+Kitchen Service Actions:
+- create kitchen_order
+- create kitchen_order_items
+- set status = NEW
+- set received_time
+
+Kitchen Display System shows:
+- new order
+- table number
+- items
+
+====================================================
+STEP 3 — INVENTORY RECEIVES EVENT
+====================================================
+
+Inventory Service subscribes to:
+ORDER_CREATED
+
+Inventory Service Actions:
+- calculate ingredient usage
+- deduct ingredients
+- create stock_usage
+- create stock_transaction_history
+
+Example:
+Biryani requires:
+- rice
+- oil
+- vegetables
+
+System deducts quantities automatically.
+
+====================================================
+STEP 4 — COOK STARTS PREPARATION
+====================================================
+
+Cook clicks START in Kitchen Dashboard.
+
+Kitchen Service Actions:
+- update kitchen_order status = PREPARING
+- set start_time
+
+Publish:
+ORDER_PREPARING
+
+Order Service receives event:
+- update order status = PREPARING
+
+====================================================
+STEP 5 — ORDER READY
+====================================================
+
+Cook clicks READY.
+
+Kitchen Service Actions:
+- update kitchen_order status = READY
+- set ready_time
+
+Publish:
+ORDER_READY
+
+Order Service Actions:
+- update order status = READY
+- set ready_time
+
+Waiter Dashboard:
+- show READY orders
+
+Counter Dashboard:
+- show ready-for-billing orders
+
+====================================================
+STEP 6 — WAITER SERVES FOOD
+====================================================
+
+Waiter clicks SERVED.
+
+Order Service Actions:
+- update status = SERVED
+- set served_time
+
+Publish:
+ORDER_SERVED
+
+====================================================
+STEP 7 — BILL GENERATION
+====================================================
+
+Counter creates bill.
+
+Billing Service Actions:
+- create bills record
+- create bill_items
+- calculate tax
+- calculate total amount
+
+Bill Status:
+GENERATED
+
+====================================================
+STEP 8 — PAYMENT PROCESSING
+====================================================
+
+Customer pays.
+
+Billing Service Actions:
+- create payments record
+- update bill status = PAID
+
+Payment Methods:
+- CASH
+- CARD
+- UPI
+- ONLINE
+
+Publish:
+PAYMENT_COMPLETED
+
+====================================================
+STEP 9 — REPORT SERVICE UPDATES
+====================================================
+
+Report Service subscribes to:
+- PAYMENT_COMPLETED
+- STOCK_UPDATED
+- EXPENSE_APPROVED
+
+Report Service Actions:
+- update daily reports
+- update monthly reports
+- update yearly reports
+- update item analytics
+
+====================================================
+KITCHEN DISPLAY SYSTEM (KDS)
+====================================================
+
+Kitchen Dashboard Columns:
+1. NEW
+2. PREPARING
+3. READY
+
+Orders move between columns dynamically.
+
+Kitchen UI Example:
+
+NEW:
+- Order 101
+- Table 5
+
+PREPARING:
+- Order 98
+
+READY:
+- Order 95
+
+====================================================
+PREPARATION TIME TRACKING
+====================================================
+
+Metrics:
+prep_time = ready_time - start_time
+
+Used for:
+- kitchen analytics
+- cook performance
+- delay detection
+
+====================================================
+DELAY DETECTION
+====================================================
+
+If order delay exceeds threshold:
+highlight order.
+
+Example:
+If order waiting > 15 minutes:
+show RED warning.
+
+====================================================
+TABLE SESSION WORKFLOW
+====================================================
+
+IMPORTANT DESIGN DECISION:
+Use table_sessions.
+
+Purpose:
+Prevent multiple disconnected orders for same table.
+
+Flow:
+1. Customer sits at table.
+2. Create table_session.
+3. All order items belong to same session.
+4. Bill generated for session.
+5. Session closes after payment.
+
+Benefits:
+- easier billing
+- supports incremental ordering
+- tracks table occupancy
+
+====================================================
+SAGA PATTERN IMPLEMENTATION
+====================================================
+
+STYLE:
+Choreography-Based Saga Pattern
+
+PURPOSE:
+Maintain consistency across distributed microservices.
+
+Avoid:
+Distributed transactions.
+
+====================================================
+WHY SAGA IS NEEDED
+====================================================
+
+Example Failure Scenario:
+
+1. Order created
+2. Kitchen order created
+3. Billing draft created
+4. Inventory deduction fails
+
+Without saga:
+system becomes inconsistent.
+
+====================================================
+SAGA COMPENSATION FLOW
+====================================================
+
+If inventory deduction fails:
+
+1. Publish INVENTORY_FAILURE
+2. Order Service cancels order
+3. Kitchen Service removes kitchen order
+4. Billing Service cancels draft bill
+
+Compensation Event:
+ORDER_CANCELLED
+
+====================================================
+COMMON MODULE RESPONSIBILITIES
+====================================================
+
+common-module stores:
+
+1. Shared DTOs
+2. Event classes
+3. Constants
+4. Shared exceptions
+5. Utility classes
+6. API response wrappers
+
+Example Event Classes:
+- OrderCreatedEvent
+- OrderReadyEvent
+- PaymentCompletedEvent
+
+====================================================
+MICROSERVICE COMMUNICATION RULES
+====================================================
+
+1. No direct DB access between services.
+
+2. Each service owns its own schema.
+
+3. Avoid distributed joins.
+
+4. Use events for cross-service updates.
+
+5. Use REST only when synchronous response needed.
+
+====================================================
+API GATEWAY RESPONSIBILITIES
+====================================================
+
+Gateway Routes:
+
+/api/users → user-service
+/api/orders → order-service
+/api/kitchen → kitchen-service
+/api/inventory → inventory-service
+/api/billing → billing-service
+/api/reports → report-service
+
+Gateway Responsibilities:
+- routing
+- JWT validation
+- request filtering
+- centralized access
+
+====================================================
+EUREKA SERVICE REGISTRY
+====================================================
+
+Responsibilities:
+- service discovery
+- dynamic service resolution
+- registration of all services
+
+====================================================
+SECURITY DESIGN
+====================================================
+
+Authentication:
+JWT Authentication
+
+Roles:
+- ADMIN
+- WAITER
+- COOK
+- COUNTER
+- INVENTORY
+
+Authorization:
+Role-based access control.
+
+====================================================
+SOFT DELETE STRATEGY
+====================================================
+
+Do NOT physically delete important records.
+
+Use:
+- is_deleted
+OR
+- status fields
+
+Apply to:
+- menu items
+- ingredients
+- staff
+- restaurant tables
+
+====================================================
+AUDIT LOGGING STRATEGY
+====================================================
+
+Most important tables include:
+- created_by
+- created_at
+- updated_by
+- updated_at
+
+Inventory Maker-Checker uses:
+- mk_user_id
+- mk_time
+- ck_user_id
+- ck_time
+
+====================================================
+REPORTING STRATEGY
+====================================================
+
+Report Service stores:
+aggregated analytics only.
+
+Do NOT run heavy analytics queries on transactional services.
+
+Reports:
+- daily
+- monthly
+- yearly
+- item popularity
+
+====================================================
+SYSTEM BENEFITS
+====================================================
+
+1. Highly scalable.
+2. Independent deployments.
+3. Better fault tolerance.
+4. Real-time kitchen updates.
+5. Event-driven architecture.
+6. Enterprise-grade design.
+7. Easy future expansion.
+
+====================================================
+FUTURE SCALABILITY OPTIONS
+====================================================
+
+Possible Future Enhancements:
+- hotel room booking
+- multi-branch support
+- cloud deployment
+- Kubernetes orchestration
+- Redis caching
+- WebSocket live dashboards
+- mobile apps
+- AI analytics
+- recommendation engine
+
+====================================================
+END OF PART 3
+====================================================
+====================================================
+BACKEND DEVELOPMENT STRATEGY
+====================================================
+
+PROJECT TYPE:
+Enterprise-grade Hotel + Restaurant Management System.
+
+BACKEND STACK:
+- Java Spring Boot
+- Spring Cloud
+- Spring Data JPA
+- Hibernate
+- Spring Security
+- JWT
+- Oracle Database
+
+ARCHITECTURE:
+Microservices Architecture
+
+COMMUNICATION:
+- REST APIs
+- Kafka or RabbitMQ Events
+
+====================================================
+DEVELOPMENT APPROACH
+====================================================
+
+IMPORTANT:
+Do NOT build all services simultaneously.
+
+Build in phases.
+
+Recommended Order:
+1. Eureka Service Registry
+2. API Gateway
+3. common-module
+4. User Service
+5. Order Service
+6. Kitchen Service
+7. Inventory Service
+8. Billing Service
+9. Report Service
+10. Event Broker Integration
+
+====================================================
+MAVEN MULTI-MODULE STRUCTURE
+====================================================
+
+restaurant-system
+│
+├── pom.xml (parent)
+│
+├── common-module
+│
+├── service-registry
+├── api-gateway
+│
+├── user-service
+├── order-service
+├── kitchen-service
+├── inventory-service
+├── billing-service
+├── report-service
+
+====================================================
+PARENT POM RESPONSIBILITIES
+====================================================
+
+Parent pom.xml manages:
+- Spring Boot version
+- Spring Cloud version
+- dependency management
+- plugin management
+- shared dependencies
+
+====================================================
+COMMON MODULE STRUCTURE
+====================================================
+
+Purpose:
+Store reusable shared code.
+
+common-module
+│
+├── dto
+├── events
+├── constants
+├── exceptions
+├── utils
+├── enums
+└── responses
+
+====================================================
+COMMON MODULE CONTENT
+====================================================
+
+DTO Examples:
+- OrderRequestDTO
+- PaymentRequestDTO
+
+Event Examples:
+- OrderCreatedEvent
+- OrderReadyEvent
+- PaymentCompletedEvent
+
+Enums:
+- OrderStatus
+- PaymentStatus
+
+Utilities:
+- DateUtils
+- JwtUtils
+
+====================================================
+STANDARD MICROSERVICE STRUCTURE
+====================================================
+
+Each service should follow:
+
+service-name
+│
+├── controller
+├── service
+├── repository
+├── entity
+├── dto
+├── mapper
+├── config
+├── security
+├── exception
+├── events
+├── producer
+├── consumer
+└── util
+
+====================================================
+LAYER RESPONSIBILITIES
+====================================================
+
+CONTROLLER:
+- expose REST endpoints
+- validate requests
+- return API responses
+
+SERVICE:
+- business logic
+- transactions
+- orchestration
+
+REPOSITORY:
+- database access
+- JPA repositories
+
+ENTITY:
+- database mapping
+
+DTO:
+- request/response objects
+
+MAPPER:
+- entity ↔ DTO conversion
+
+CONFIG:
+- Kafka/RabbitMQ
+- security
+- Swagger
+- CORS
+
+PRODUCER:
+- publish events
+
+CONSUMER:
+- consume events
+
+====================================================
+SERVICE REGISTRY IMPLEMENTATION
+====================================================
+
+SERVICE:
+service-registry
+
+DEPENDENCY:
+spring-cloud-starter-netflix-eureka-server
+
+RESPONSIBILITY:
+- register all services
+- service discovery
+
+====================================================
+API GATEWAY IMPLEMENTATION
+====================================================
+
+SERVICE:
+api-gateway
+
+DEPENDENCY:
+spring-cloud-starter-gateway
+
+RESPONSIBILITIES:
+- route requests
+- JWT validation
+- authentication filter
+- centralized API access
+
+====================================================
+USER SERVICE IMPLEMENTATION
+====================================================
+
+PURPOSE:
+Authentication and authorization.
+
+FEATURES:
+- login
+- JWT generation
+- role management
+- user activity logging
+
+MAIN TABLES:
+- roles
+- staff_users
+- user_sessions
+- user_activity_logs
+
+IMPORTANT APIs:
+POST /auth/login
+POST /users
+GET /users/{id}
+
+====================================================
+ORDER SERVICE IMPLEMENTATION
+====================================================
+
+PURPOSE:
+Core restaurant ordering system.
+
+FEATURES:
+- create order
+- manage order lifecycle
+- table sessions
+- order items
+
+MAIN TABLES:
+- restaurant_tables
+- table_sessions
+- orders
+- order_items
+- order_status_history
+
+IMPORTANT APIs:
+POST /orders
+GET /orders/{id}
+PUT /orders/status
+
+IMPORTANT:
+After creating order:
+publish ORDER_CREATED event.
+
+====================================================
+KITCHEN SERVICE IMPLEMENTATION
+====================================================
+
+PURPOSE:
+Kitchen Display System (KDS).
+
+FEATURES:
+- kitchen queue
+- cooking workflow
+- preparation tracking
+
+MAIN TABLES:
+- kitchen_orders
+- kitchen_order_items
+- kitchen_order_history
+
+IMPORTANT APIs:
+GET /kitchen/orders
+PUT /kitchen/orders/{id}/start
+PUT /kitchen/orders/{id}/ready
+
+IMPORTANT:
+Consume ORDER_CREATED event.
+
+====================================================
+INVENTORY SERVICE IMPLEMENTATION
+====================================================
+
+PURPOSE:
+Stock management and kitchen expenses.
+
+FEATURES:
+- stock entry
+- stock usage
+- expense tracking
+- maker-checker approval
+
+MAIN TABLES:
+- ingredients
+- stock_entries
+- stock_usage
+- kitchen_expenses
+- stock_transaction_history
+
+IMPORTANT:
+Maker-checker ONLY applies here.
+
+====================================================
+BILLING SERVICE IMPLEMENTATION
+====================================================
+
+PURPOSE:
+Billing and payment management.
+
+FEATURES:
+- bill generation
+- payment handling
+- invoice generation
+
+MAIN TABLES:
+- bills
+- bill_items
+- payments
+- invoices
+
+IMPORTANT APIs:
+POST /bills
+POST /payments
+GET /invoice/{id}
+
+====================================================
+REPORT SERVICE IMPLEMENTATION
+====================================================
+
+PURPOSE:
+Analytics and reporting.
+
+FEATURES:
+- daily reports
+- monthly reports
+- yearly reports
+- item analytics
+
+MAIN TABLES:
+- daily_sales_reports
+- monthly_sales_reports
+- yearly_sales_reports
+- item_sales_reports
+
+IMPORTANT:
+Consumes:
+- PAYMENT_COMPLETED
+- STOCK_UPDATED
+- EXPENSE_APPROVED
+
+====================================================
+DATABASE STRATEGY
+====================================================
+
+RULES:
+1. Separate schema per service.
+2. No cross-service DB access.
+3. Use JPA/Hibernate.
+4. Use Oracle sequences if needed.
+5. Use indexing on:
+   - order_id
+   - status
+   - created_at
+   - placed_time
+
+====================================================
+NAMING CONVENTIONS
+====================================================
+
+DATABASE:
+- snake_case
+
+JAVA:
+- PascalCase for classes
+- camelCase for variables
+
+REST APIs:
+- lowercase
+- plural naming
+
+====================================================
+SOFT DELETE IMPLEMENTATION
+====================================================
+
+Use:
+- is_deleted
+OR
+- status field
+
+Do NOT physically delete:
+- menu items
+- ingredients
+- staff
+- tables
+
+====================================================
+AUDIT IMPLEMENTATION
+====================================================
+
+Most important entities should include:
+- created_by
+- created_at
+- updated_by
+- updated_at
+
+Inventory uses:
+- mk_user_id
+- mk_time
+- ck_user_id
+- ck_time
+
+====================================================
+JWT SECURITY FLOW
+====================================================
+
+1. User logs in.
+2. User Service validates credentials.
+3. JWT token generated.
+4. Gateway validates token.
+5. Requests forwarded to services.
+
+====================================================
+EXCEPTION HANDLING STRATEGY
+====================================================
+
+Use:
+- Global Exception Handler
+- Custom Exceptions
+
+Examples:
+- ResourceNotFoundException
+- InvalidOrderStateException
+- UnauthorizedException
+
+====================================================
+API RESPONSE FORMAT
+====================================================
+
+Standard Response Structure:
+
+{
+  "success": true,
+  "message": "Order Created",
+  "data": {}
+}
+
+====================================================
+SWAGGER DOCUMENTATION
+====================================================
+
+Use:
+springdoc-openapi
+
+Purpose:
+- API documentation
+- testing endpoints
+
+====================================================
+TESTING STRATEGY
+====================================================
+
+Use:
+- JUnit
+- Mockito
+
+Testing Types:
+- Unit Testing
+- Service Layer Testing
+- API Testing
+
+====================================================
+LOGGING STRATEGY
+====================================================
+
+Use:
+- SLF4J
+- Logback
+
+Log Important Actions:
+- order creation
+- payment
+- inventory approval
+- authentication failures
+
+====================================================
+DEPLOYMENT STRATEGY
+====================================================
+
+OPTIONAL DEPLOYMENT:
+Docker-based deployment.
+
+Possible Future:
+Kubernetes orchestration.
+
+====================================================
+SCALABILITY CONSIDERATIONS
+====================================================
+
+Possible Future Enhancements:
+- Redis caching
+- WebSockets
+- Multi-branch support
+- Hotel room booking
+- Mobile applications
+
+====================================================
+FRONTEND STRATEGY (REACT)
+====================================================
+
+Frontend Modules:
+- Waiter Dashboard
+- Kitchen Dashboard
+- Counter Dashboard
+- Inventory Dashboard
+- Admin Dashboard
+
+Frontend communicates ONLY with:
+API Gateway
+
+====================================================
+RECOMMENDED DEVELOPMENT PHASES
+====================================================
+
+PHASE 1:
+Infrastructure
+- Eureka
+- Gateway
+- Common module
+
+PHASE 2:
+Core Business
+- User Service
+- Order Service
+
+PHASE 3:
+Operations
+- Kitchen Service
+- Inventory Service
+
+PHASE 4:
+Financial
+- Billing Service
+- Report Service
+
+PHASE 5:
+Event-driven integration
+- Kafka/RabbitMQ
+- Saga implementation
+
+====================================================
+FINAL SYSTEM CAPABILITIES
+====================================================
+
+System Supports:
+- Dine-in ordering
+- Online ordering
+- Kitchen workflow
+- Real-time KDS
+- Inventory management
+- Maker-checker approvals
+- Billing and payments
+- Analytics reporting
+- Event-driven communication
+- Saga pattern
+- JWT security
+- Microservices architecture
+
+====================================================
+END OF PART 4
+====================================================
+====================================================
+FRONTEND ARCHITECTURE OVERVIEW
+====================================================
+
+FRONTEND TECHNOLOGY:
+ReactJS
+
+PURPOSE:
+Provide role-based operational dashboards for:
+- Waiters
+- Kitchen staff
+- Counter staff
+- Inventory staff
+- Admins
+
+COMMUNICATION:
+Frontend communicates ONLY through API Gateway.
+
+Frontend must NEVER directly communicate with:
+- databases
+- Kafka/RabbitMQ
+- other services
+
+====================================================
+FRONTEND MODULES
+====================================================
+
+1. Authentication Module
+2. Waiter Dashboard
+3. Kitchen Dashboard (KDS)
+4. Counter/Billing Dashboard
+5. Inventory Dashboard
+6. Admin Dashboard
+7. Reports Dashboard
+
+====================================================
+1. AUTHENTICATION MODULE
+====================================================
+
+FEATURES:
+- Login
+- JWT token handling
+- Role-based navigation
+- Session management
+
+FLOW:
+1. User logs in.
+2. Frontend sends credentials to API Gateway.
+3. User Service validates credentials.
+4. JWT token returned.
+5. Token stored securely.
+6. Role-based dashboard loaded.
+
+ROLES:
+- ADMIN
+- WAITER
+- COOK
+- COUNTER
+- INVENTORY
+
+====================================================
+2. WAITER DASHBOARD
+====================================================
+
+PURPOSE:
+Waiter operations.
+
+FEATURES:
+- View restaurant tables
+- Create table session
+- Create orders
+- Add order items
+- Track order status
+- View READY orders
+
+MAIN SCREENS:
+1. Table Layout Screen
+2. Active Session Screen
+3. Order Creation Screen
+4. Ready Orders Screen
+
+====================================================
+WAITER FLOW
+====================================================
+
+1. Select table.
+2. Create/open session.
+3. Add food items.
+4. Submit order.
+5. Order sent to kitchen.
+6. Waiter sees READY notification.
+7. Serve food.
+8. Close session after payment.
+
+====================================================
+3. KITCHEN DASHBOARD (KDS)
+====================================================
+
+PURPOSE:
+Kitchen Display System.
+
+FEATURES:
+- Real-time order queue
+- Preparation tracking
+- Cook assignment
+- Delay highlighting
+
+MAIN COLUMNS:
+1. NEW
+2. PREPARING
+3. READY
+
+====================================================
+KITCHEN FLOW
+====================================================
+
+1. ORDER_CREATED event received.
+2. Order appears in NEW column.
+3. Cook clicks START.
+4. Order moves to PREPARING.
+5. Cook clicks READY.
+6. ORDER_READY event published.
+
+====================================================
+KITCHEN UI REQUIREMENTS
+====================================================
+
+Display:
+- order number
+- table number
+- order items
+- placed time
+- elapsed time
+
+OPTIONAL:
+Highlight delayed orders in RED.
+
+====================================================
+4. COUNTER / BILLING DASHBOARD
+====================================================
+
+PURPOSE:
+Billing and payment management.
+
+FEATURES:
+- View served orders
+- Generate bills
+- Accept payments
+- Generate invoices
+
+MAIN SCREENS:
+1. Pending Bills
+2. Bill Details
+3. Payment Screen
+4. Invoice Screen
+
+====================================================
+BILLING FLOW
+====================================================
+
+1. Counter selects order/session.
+2. Bill generated.
+3. Tax calculated.
+4. Customer pays.
+5. Payment recorded.
+6. Invoice generated.
+
+====================================================
+PAYMENT METHODS
+====================================================
+
+- CASH
+- CARD
+- UPI
+- ONLINE
+
+====================================================
+5. INVENTORY DASHBOARD
+====================================================
+
+PURPOSE:
+Kitchen stock management.
+
+FEATURES:
+- Ingredient management
+- Daily stock entry
+- Stock usage tracking
+- Expense management
+- Maker-checker approval
+
+====================================================
+INVENTORY FLOW
+====================================================
+
+1. Staff enters stock.
+2. Entry status = PENDING.
+3. Checker approves/rejects.
+4. Approved stock updates inventory.
+
+====================================================
+MAKER-CHECKER FLOW
+====================================================
+
+Maker:
+- creates stock entry
+- creates kitchen expense
+
+Checker:
+- approves or rejects
+
+Approval Status:
+- PENDING
+- APPROVED
+- REJECTED
+
+====================================================
+6. ADMIN DASHBOARD
+====================================================
+
+PURPOSE:
+Administrative control panel.
+
+FEATURES:
+- User management
+- Role management
+- Restaurant configuration
+- Analytics overview
+- System monitoring
+
+====================================================
+ADMIN CAPABILITIES
+====================================================
+
+- create staff accounts
+- assign roles
+- view reports
+- monitor orders
+- monitor inventory
+- monitor revenue
+
+====================================================
+7. REPORTS DASHBOARD
+====================================================
+
+PURPOSE:
+Business analytics.
+
+REPORT TYPES:
+- daily reports
+- monthly reports
+- yearly reports
+- item popularity
+- expense reports
+
+====================================================
+REPORT EXAMPLES
+====================================================
+
+Daily Report:
+- total orders
+- total revenue
+- total expense
+- net profit
+
+Item Report:
+- most sold item
+- quantity sold
+- generated revenue
+
+====================================================
+UI DESIGN PRINCIPLES
+====================================================
+
+1. Fast operational workflow.
+2. Minimal clicks.
+3. Real-time updates.
+4. Responsive design.
+5. Dashboard-oriented UI.
+
+====================================================
+REACT FRONTEND STRUCTURE
+====================================================
+
+src/
+│
+├── components
+├── pages
+├── services
+├── hooks
+├── context
+├── routes
+├── layouts
+├── utils
+├── constants
+└── styles
+
+====================================================
+RECOMMENDED FRONTEND MODULE STRUCTURE
+====================================================
+
+src/modules/
+│
+├── auth
+├── waiter
+├── kitchen
+├── billing
+├── inventory
+├── reports
+└── admin
+
+====================================================
+FRONTEND API STRATEGY
+====================================================
+
+Use Axios or Fetch.
+
+Frontend calls:
+API Gateway only.
+
+Example:
+GET /api/orders
+POST /api/orders
+GET /api/kitchen/orders
+
+====================================================
+STATE MANAGEMENT STRATEGY
+====================================================
+
+Possible Options:
+- Context API
+- Redux Toolkit
+
+Recommended:
+Redux Toolkit for scalability.
+
+====================================================
+REAL-TIME UPDATE STRATEGY
+====================================================
+
+Possible Future:
+Use WebSockets or Server-Sent Events (SSE).
+
+Purpose:
+- instant kitchen updates
+- live order updates
+- real-time dashboards
+
+====================================================
+ERROR HANDLING STRATEGY
+====================================================
+
+Frontend should:
+- show toast notifications
+- show validation messages
+- handle session expiry
+- redirect unauthorized users
+
+====================================================
+ROLE-BASED ROUTING
+====================================================
+
+Example:
+WAITER:
+- can access waiter dashboard only
+
+COOK:
+- can access kitchen dashboard only
+
+ADMIN:
+- full access
+
+====================================================
+PERFORMANCE CONSIDERATIONS
+====================================================
+
+1. Lazy loading routes.
+2. Component reuse.
+3. Pagination for large datasets.
+4. Debounced searches.
+5. Optimized API calls.
+
+====================================================
+FUTURE HOTEL MODULE EXPANSION
+====================================================
+
+Possible Future Hotel Features:
+- room booking
+- check-in/check-out
+- room service
+- housekeeping
+- customer management
+- hotel billing
+
+====================================================
+MULTI-BRANCH SCALABILITY
+====================================================
+
+Possible Future:
+Support multiple branches.
+
+Required Changes:
+- branch_id in entities
+- branch-level inventory
+- branch-level reports
+
+====================================================
+AI/ANALYTICS FUTURE IDEAS
+====================================================
+
+Possible Future AI Features:
+- sales forecasting
+- inventory prediction
+- demand prediction
+- recommendation engine
+- customer behavior analytics
+
+====================================================
+DEVOPS FUTURE IDEAS
+====================================================
+
+Possible Future:
+- Docker
+- Kubernetes
+- CI/CD pipelines
+- centralized logging
+- monitoring dashboards
+
+====================================================
+ENTERPRISE-LEVEL DESIGN DECISIONS
+====================================================
+
+1. Microservices architecture.
+2. Event-driven communication.
+3. Saga pattern.
+4. Separate DB per service.
+5. Soft delete strategy.
+6. Audit logging.
+7. Maker-checker workflow.
+8. API Gateway pattern.
+9. Service registry pattern.
+
+====================================================
+IMPORTANT DESIGN DECISIONS TAKEN
+====================================================
+
+1. React selected for frontend.
+
+2. Kitchen service stores only kitchen-specific data.
+
+3. Table sessions implemented to avoid duplicate orders.
+
+4. Maker-checker restricted ONLY to inventory and expenses.
+
+5. Reports use aggregated analytics data.
+
+6. Event-driven communication preferred over direct service calls.
+
+====================================================
+FINAL PROJECT VISION
+====================================================
+
+The system is intended to become an enterprise-grade Hotel + Restaurant Management Platform capable of supporting:
+
+- restaurant operations
+- hotel operations
+- inventory management
+- kitchen workflow
+- billing/payments
+- analytics/reporting
+- scalable cloud deployment
+
+====================================================
+END OF PART 5
+====================================================
+====================================================
+NON-FUNCTIONAL REQUIREMENTS (NFRs)
+====================================================
+
+SYSTEM TYPE:
+Enterprise-grade Hotel + Restaurant Management Platform.
+
+====================================================
+1. SCALABILITY
+====================================================
+
+System should support:
+- increasing restaurant traffic
+- multiple concurrent users
+- future multi-branch expansion
+
+Microservices allow:
+- independent scaling
+- isolated deployments
+
+Example:
+Kitchen Service can scale independently during high order load.
+
+====================================================
+2. AVAILABILITY
+====================================================
+
+System should remain operational even if one service partially fails.
+
+Approach:
+- event-driven architecture
+- retry mechanisms
+- saga compensation
+
+====================================================
+3. FAULT TOLERANCE
+====================================================
+
+Use:
+- asynchronous messaging
+- event retries
+- dead-letter queues (future enhancement)
+
+Purpose:
+Prevent complete system failure.
+
+====================================================
+4. PERFORMANCE
+====================================================
+
+System should provide:
+- fast order placement
+- real-time kitchen updates
+- optimized reporting
+
+Possible Future Optimizations:
+- Redis caching
+- database indexing
+- async processing
+
+====================================================
+5. SECURITY
+====================================================
+
+Authentication:
+JWT-based authentication.
+
+Authorization:
+Role-based access control.
+
+Security Goals:
+- secure APIs
+- prevent unauthorized access
+- session validation
+- token expiration handling
+
+====================================================
+6. MAINTAINABILITY
+====================================================
+
+Maintainability achieved through:
+- layered architecture
+- microservices separation
+- reusable common-module
+- coding standards
+
+====================================================
+7. OBSERVABILITY
+====================================================
+
+Future enhancements:
+- centralized logging
+- distributed tracing
+- monitoring dashboards
+
+Possible Tools:
+- ELK Stack
+- Grafana
+- Prometheus
+
+====================================================
+8. DATA CONSISTENCY
+====================================================
+
+Use:
+Saga Pattern
+
+Style:
+Choreography-based saga.
+
+Avoid:
+Distributed database transactions.
+
+====================================================
+9. DATABASE PRINCIPLES
+====================================================
+
+Rules:
+1. Each service owns its own schema.
+2. No direct DB access between services.
+3. No distributed joins.
+4. Use events for synchronization.
+
+====================================================
+10. SOFT DELETE STRATEGY
+====================================================
+
+Avoid physical deletion.
+
+Use:
+- is_deleted
+OR
+- status field
+
+Apply to:
+- menu items
+- ingredients
+- staff users
+- restaurant tables
+
+====================================================
+11. AUDIT LOGGING STRATEGY
+====================================================
+
+Most entities should include:
+- created_by
+- created_at
+- updated_by
+- updated_at
+
+Inventory maker-checker fields:
+- mk_user_id
+- mk_time
+- ck_user_id
+- ck_time
+
+====================================================
+12. REPORTING STRATEGY
+====================================================
+
+Report Service stores:
+aggregated analytical data only.
+
+Purpose:
+Avoid heavy queries on transactional services.
+
+====================================================
+13. FRONTEND DESIGN PRINCIPLES
+====================================================
+
+Frontend should be:
+- dashboard-oriented
+- responsive
+- operationally fast
+- role-based
+
+Use:
+ReactJS
+
+Possible Future:
+- mobile applications
+- tablet kitchen screens
+
+====================================================
+14. EVENT-DRIVEN PRINCIPLES
+====================================================
+
+Core Events:
+- ORDER_CREATED
+- ORDER_PREPARING
+- ORDER_READY
+- ORDER_SERVED
+- PAYMENT_COMPLETED
+- STOCK_UPDATED
+- EXPENSE_APPROVED
+- ORDER_CANCELLED
+
+Benefits:
+- loose coupling
+- scalability
+- fault tolerance
+
+====================================================
+15. COMMON MODULE PRINCIPLES
+====================================================
+
+common-module contains:
+- shared DTOs
+- events
+- enums
+- utilities
+- constants
+- exceptions
+
+Purpose:
+Reduce duplication across services.
+
+====================================================
+16. ORDER MANAGEMENT PRINCIPLES
+====================================================
+
+Important Decision:
+Use table_sessions.
+
+Reason:
+- avoid duplicate table orders
+- support incremental ordering
+- simplify billing
+
+Order Flow:
+1. create session
+2. place order
+3. kitchen processing
+4. serve order
+5. billing
+6. close session
+
+====================================================
+17. KITCHEN DISPLAY SYSTEM PRINCIPLES
+====================================================
+
+Kitchen Dashboard States:
+- NEW
+- PREPARING
+- READY
+
+Purpose:
+Provide real-time cooking workflow visibility.
+
+====================================================
+18. INVENTORY MANAGEMENT PRINCIPLES
+====================================================
+
+Inventory supports:
+- stock entries
+- stock usage
+- stock adjustments
+- kitchen expenses
+
+Maker-checker ONLY applies here.
+
+====================================================
+19. BILLING PRINCIPLES
+====================================================
+
+Billing supports:
+- bill generation
+- tax calculation
+- payment processing
+- invoice generation
+
+Payment Methods:
+- CASH
+- CARD
+- UPI
+- ONLINE
+
+====================================================
+20. REPORTING PRINCIPLES
+====================================================
+
+Reports:
+- daily
+- monthly
+- yearly
+- item analytics
+
+Possible Metrics:
+- revenue
+- expense
+- net profit
+- top selling items
+
+====================================================
+21. FUTURE HOTEL MANAGEMENT EXPANSION
+====================================================
+
+Possible Future Modules:
+- room booking
+- room inventory
+- housekeeping
+- guest management
+- hotel billing
+- room service integration
+
+====================================================
+22. FUTURE MULTI-BRANCH SUPPORT
+====================================================
+
+Possible Future:
+Support multiple branches.
+
+Future Changes:
+- branch_id in tables
+- branch-level reports
+- branch-level inventory
+
+====================================================
+23. FUTURE REAL-TIME FEATURES
+====================================================
+
+Possible Future:
+Use WebSockets.
+
+Use Cases:
+- live kitchen updates
+- instant waiter notifications
+- live dashboards
+
+====================================================
+24. FUTURE CLOUD DEPLOYMENT
+====================================================
+
+Possible Deployment:
+- Docker
+- Kubernetes
+- AWS/Azure/GCP
+
+====================================================
+25. FUTURE AI FEATURES
+====================================================
+
+Possible Future AI Enhancements:
+- sales prediction
+- inventory forecasting
+- recommendation systems
+- demand prediction
+
+====================================================
+26. RECOMMENDED DEVELOPMENT PHASES
+====================================================
+
+PHASE 1:
+Infrastructure
+- Eureka
+- API Gateway
+- common-module
+
+PHASE 2:
+Authentication
+- User Service
+
+PHASE 3:
+Core Restaurant Operations
+- Order Service
+- Kitchen Service
+
+PHASE 4:
+Inventory & Expenses
+- Inventory Service
+
+PHASE 5:
+Financial Systems
+- Billing Service
+
+PHASE 6:
+Analytics
+- Report Service
+
+PHASE 7:
+Event-Driven Integration
+- Kafka/RabbitMQ
+- Saga Pattern
+
+====================================================
+27. RECOMMENDED CODING STANDARDS
+====================================================
+
+Use:
+- layered architecture
+- DTO mapping
+- global exception handling
+- reusable utilities
+- RESTful APIs
+
+====================================================
+28. RECOMMENDED DATABASE PRACTICES
+====================================================
+
+1. Use indexes on:
+   - status
+   - order_id
+   - created_at
+
+2. Store snapshots:
+   - item_name
+   - price
+
+3. Use audit fields.
+
+====================================================
+29. RECOMMENDED API PRACTICES
+====================================================
+
+Use:
+- standardized responses
+- proper status codes
+- Swagger/OpenAPI
+
+====================================================
+30. RECOMMENDED TESTING STRATEGY
+====================================================
+
+Testing Types:
+- unit testing
+- service testing
+- API testing
+
+Frameworks:
+- JUnit
+- Mockito
+
+====================================================
+31. FINAL SYSTEM SUMMARY
+====================================================
+
+FINAL SYSTEM COMPONENTS:
+
+Infrastructure:
+- API Gateway
+- Eureka Service Registry
+- Kafka/RabbitMQ
+
+Shared:
+- common-module
+
+Core Services:
+- User Service
+- Order Service
+- Kitchen Service
+- Inventory Service
+- Billing Service
+- Report Service
+
+Frontend:
+- ReactJS
+
+Database:
+- Oracle Database
+
+====================================================
+32. FINAL ENTERPRISE CAPABILITIES
+====================================================
+
+System supports:
+- dine-in ordering
+- online ordering
+- real-time kitchen workflow
+- inventory management
+- maker-checker approval
+- billing/payments
+- analytics/reporting
+- JWT authentication
+- event-driven communication
+- saga pattern
+- scalable microservices architecture
+
+====================================================
+33. FINAL AI CONTEXT INSTRUCTION
+====================================================
+
+Any AI model continuing this project should understand:
+
+1. The project is enterprise-oriented.
+
+2. Architecture decisions are intentional.
+
+3. Microservices communicate primarily through events.
+
+4. Inventory uses maker-checker approval.
+
+5. Table sessions are critical to order flow.
+
+6. Billing stores item snapshots.
+
+7. Report service stores aggregated data only.
+
+8. React frontend communicates only via API Gateway.
+
+9. Oracle Database is the selected DB.
+
+10. Kafka or RabbitMQ can be used interchangeably conceptually.
+
+11. The system is designed for future scalability:
+   - hotel modules
+   - multi-branch
+   - cloud deployment
+   - AI analytics
+
+====================================================
+END OF MASTER CONTEXT PROMPT
+====================================================
+1️⃣ Menu Management Module (IMPORTANT)
+
+Right now orders reference:
+
+menu_item_id
+
+But the actual menu service/module is not defined.
+
+You should add:
+
+Menu Management Service
+
+Responsibilities:
+
+menu categories
+menu items
+pricing
+availability
+recipes mapping
+Suggested Tables
+menu_categories
+menu_items
+menu_item_recipes
+
+This becomes VERY important because:
+
+Inventory deduction depends on recipes.
+
+Example:
+
+1 Biryani =
+200g rice
+100g chicken
+20ml oil
+
+Without this module:
+
+inventory automation becomes incomplete.
+
+This is the MOST important missing module.
+
+2️⃣ Notification Service (Recommended)
+
+Future microservice:
+
+notification-service
+
+Responsibilities:
+
+waiter notifications
+SMS/email
+push notifications
+kitchen alerts
+
+Events:
+
+ORDER_READY
+PAYMENT_COMPLETED
+LOW_STOCK_ALERT
+3️⃣ Caching Strategy
+
+Add future Redis support.
+
+Example:
+
+Redis Cache
+
+Use cases:
+
+menu caching
+active orders
+dashboard stats
+
+This improves performance.
+
+4️⃣ WebSocket Strategy
+
+Very important for real-time dashboards.
+
+Add:
+
+WebSocket/SSE support
+
+Used for:
+
+live kitchen updates
+waiter notifications
+real-time order tracking
+
+Without this, frontend polling becomes inefficient.
+
+5️⃣ File/Invoice Storage Strategy
+
+Future consideration:
+
+PDF invoice generation
+
+Possible storage:
+
+local storage
+AWS S3
+cloud storage
+6️⃣ Branch Management (Very Important Future Addition)
+
+If future multi-branch support is expected:
+
+Add:
+
+branch_id
+
+in important entities.
+
+Future services:
+
+branch-service
+
+This is important for scalability.
+
+7️⃣ Environment Configuration Strategy
+
+Add:
+
+dev
+qa
+prod
+
+environments.
+
+Configuration management becomes important in microservices.
+
+8️⃣ Logging & Monitoring
+
+Very enterprise-important.
+
+Future stack:
+
+ELK Stack
+Grafana
+Prometheus
+Zipkin
+
+Purpose:
+
+monitoring
+distributed tracing
+debugging
+9️⃣ CI/CD Pipeline
+
+Future DevOps direction:
+
+GitHub Actions
+Jenkins
+Docker
+Kubernetes
+🔟 API Versioning
+
+Very important in enterprise systems.
+
+Example:
+
+/api/v1/orders
+
+Prevents breaking frontend compatibility later.
+
+1️⃣1️⃣ Rate Limiting & Security
+
+Gateway future enhancements:
+
+rate limiting
+request throttling
+IP filtering
+1️⃣2️⃣ Hotel-Specific Expansion (IMPORTANT)
+
+Since project is:
+
+Hotel + Restaurant Management System
+
+You should explicitly mention:
+
+Future Hotel Modules:
+
+room_booking_service
+housekeeping_service
+guest_management_service
+room_service_service
+⭐ MOST IMPORTANT MISSING MODULE
+
+If you add ONLY ONE THING:
+
+Add:
+
+🍽 Menu Service
+
+Because currently:
+
+orders exist
+inventory exists
+
+BUT:
+
+recipe mapping layer is missing
+
+That service connects:
+
+Orders ↔ Inventory
+Recommended Final Additional Services
+menu-service
+notification-service
+⭐ My Strong Recommendation
+
+Your final architecture should eventually become:
+
+API Gateway
+Eureka
+
+User Service
+Menu Service
+Order Service
+Kitchen Service
+Inventory Service
+Billing Service
+Report Service
+Notification Service
+
+That becomes VERY close to a production-grade restaurant platform.
+
+Final Verdict
+
+Your current design is already:
+
+strong
+scalable
+interview-worthy
+enterprise-level
+
+But adding:
+
+Menu Service
+Notification Service
+WebSockets
+Redis
+Monitoring
+
+will push it toward:
+
+real-world production architecture
+
+for a modern restaurant/hotel platform.
