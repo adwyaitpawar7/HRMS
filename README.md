@@ -9,7 +9,7 @@ Built with **Java Spring Boot**, **ReactJS**, **Oracle Database**, and **Event-D
 ![Java](https://img.shields.io/badge/Java-17-orange)
 ![Spring Boot](https://img.shields.io/badge/SpringBoot-Microservices-brightgreen)
 ![React](https://img.shields.io/badge/Frontend-React-blue)
-![Oracle](https://img.shields.io/badge/Database-Oracle-red)
+![Oracle | Postgres](https://img.shields.io/badge/Database-Oracle-red)
 ![Architecture](https://img.shields.io/badge/Architecture-Microservices-purple)
 ![Messaging](https://img.shields.io/badge/Messaging-Kafka%20%7C%20RabbitMQ-yellow)
 
